@@ -113,35 +113,58 @@ class HBNBCommand(cmd.Cmd):
         """ Overrides the emptyline method of CMD """
         pass
 
-    def do_create(self, line):
-        """Usage: create <Class name> <param 1> <param 2> <param 3>..."""
-        if not line:
+    def do_create(self, arg):
+        """Create an object with optional key=value parameters."""
+        if not arg:
             print("** class name missing **")
             return
-        args = line.split()
-        if args[0] not in HBNBCommand.classes.keys():
+
+        args = arg.split()
+        class_name = args[0]
+
+        if class_name not in self.classes:
             print("** class doesn't exist **")
             return
-        kwargs = {}
-        for param in range(1, len(args)):
-            ky, vl = args[param].split("=")
-            if vl[0] == '"':
-                vl = vl.replace('_', ' ').strip('"')
+
+        params = {}
+
+        for parameter in args[1:]:
+            if "=" not in parameter:
+                continue
+
+            key, value = parameter.split("=", 1)
+
+            if not key or not value:
+                continue
+
+            if value.startswith('"'):
+                if len(value) < 2 or not value.endswith('"'):
+                    continue
+
+                value = value[1:-1]
+                value = value.replace('\\\"', '"')
+                value = value.replace("_", " ")
+
+            elif "." in value:
+                try:
+                    value = float(value)
+                except ValueError:
+                    continue
+
             else:
                 try:
-                    vl = eval(vl)
-                except (SyntaxError, NameError):
+                    value = int(value)
+                except ValueError:
                     continue
-            kwargs[ky] = vl
-        if len(kwargs) == 0:
-            obj = eval(args[0])()
-        else:
-            obj = eval(args[0])(**kwargs)
-        print(obj.id)
-        obj.save()
 
-    def do_hcf(self, line):
-        storage.hcf(eval(line))
+            params[key] = value
+
+        try:
+            new_instance = self.classes[class_name](**params)
+            new_instance.save()
+            print(new_instance.id)
+        except Exception:
+            pass
 
     def help_create(self):
         """ Help information for the create method """
