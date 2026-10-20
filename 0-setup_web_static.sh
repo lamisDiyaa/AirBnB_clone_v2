@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Set up Nginx and the web_static deployment directories.
+# Configure Nginx and prepare directories for web_static deployment.
 
 set +e
 
@@ -26,20 +26,16 @@ ln -s /data/web_static/releases/test /data/web_static/current
 
 chown -R ubuntu:ubuntu /data/
 
-cat > /etc/nginx/conf.d/web_static.conf <<'NGINX'
-server {
-    listen 80;
-    server_name _;
+NGINX_CONFIG="/etc/nginx/sites-available/default"
 
-    location /hbnb_static/ {
-        alias /data/web_static/current/;
-        index index.html;
-    }
-}
-NGINX
+if [ -f "$NGINX_CONFIG" ] && ! grep -q 'alias /data/web_static/current/;' "$NGINX_CONFIG"; then
+    sed -i '/server_name _;/a\
+    location /hbnb_static/ {\
+        alias /data/web_static/current/;\
+    }' "$NGINX_CONFIG"
+fi
 
-nginx -t
-if [ $? -eq 0 ]; then
+if nginx -t; then
     systemctl restart nginx
 fi
 
