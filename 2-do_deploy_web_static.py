@@ -1,32 +1,30 @@
 #!/usr/bin/python3
-"""Distributes an archive to web servers."""
-
+"""Fabric script that distributes an archive to the web servers."""
 from fabric.api import env, put, run
-from os.path import exists, basename, splitext
+from os.path import exists
 
-env.hosts = ['<IP web-01>', '<IP web-02>']
+env.hosts = ['حطي_IP_ويب_01', 'حطي_IP_ويب_02']
 
 
 def do_deploy(archive_path):
-    """Deploy an archive to the web servers."""
+    """Distribute an archive to the web servers.
+
+    Returns True if all operations succeed, otherwise False.
+    """
     if not exists(archive_path):
         return False
-
-    archive_name = basename(archive_path)
-    release_name = splitext(archive_name)[0]
-    archive_tmp = "/tmp/{}".format(archive_name)
-    release_path = "/data/web_static/releases/{}".format(release_name)
-    current_link = "/data/web_static/current"
-
+    file_name = archive_path.split("/")[-1]
+    name = file_name.split(".")[0]
+    path = "/data/web_static/releases/{}/".format(name)
     try:
-        put(archive_path, archive_tmp)
-        run("mkdir -p {}".format(release_path))
-        run("tar -xzf {} -C {}".format(archive_tmp, release_path))
-        run("rm -f {}".format(archive_tmp))
-        run("mv {}/web_static/* {}/".format(release_path, release_path))
-        run("rm -rf {}/web_static".format(release_path))
-        run("rm -rf {}".format(current_link))
-        run("ln -s {}/ {}".format(release_path, current_link))
+        put(archive_path, "/tmp/{}".format(file_name))
+        run("mkdir -p {}".format(path))
+        run("tar -xzf /tmp/{} -C {}".format(file_name, path))
+        run("rm /tmp/{}".format(file_name))
+        run("mv {0}web_static/* {0}".format(path))
+        run("rm -rf {}web_static".format(path))
+        run("rm -rf /data/web_static/current")
+        run("ln -s {} /data/web_static/current".format(path))
         print("New version deployed!")
         return True
     except Exception:
