@@ -17,15 +17,12 @@ def do_pack():
     archive_path = "versions/{}".format(archive_name)
 
     print("Packing web_static to {}".format(archive_path))
-    result = local(
-        "tar -czvf {} web_static".format(archive_path),
-        capture=False
-    )
+    result = local("tar -czvf {} web_static".format(archive_path),
+                   capture=False)
 
     if result.failed:
         return None
 
     print("web_static packed: {} -> {}Bytes".format(
-        archive_path, getsize(archive_path)
-    ))
+        archive_path, getsize(archive_path)))
     return archive_path
